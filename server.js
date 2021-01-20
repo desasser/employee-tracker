@@ -16,7 +16,7 @@ const connection = mysql.createConnection({
   database: "employee_db"
 });
 
-connection.connect(function(err) {
+connection.connect(function (err) {
   if (err) throw err;
   console.log("connected as id " + connection.threadId + "\n");
   startUp();
@@ -26,10 +26,10 @@ function startUp() {
   inquirer.prompt(
     {
       type: 'list',
-      choices: ['Add department', 'Add role', 'Add employee','View department', 'View role', 'View employee', 'Update employee roles'],
+      choices: ['Add department', 'Add role', 'Add employee', 'View department', 'View role', 'View employee', 'Update employee roles'],
       message: 'What would you like to do?',
       name: 'action'
-  }
+    }
   ).then(answers => {
     console.log(answers);
     switch (answers.action) {
@@ -76,7 +76,7 @@ function addDepartment() {
       },
       (err, res) => {
         if (err) throw err;
-        console.log(res.affectedRows + " product inserted!\n");
+        console.log(res.affectedRows + " department inserted!\n");
         startUp();
       }
     )
@@ -84,8 +84,42 @@ function addDepartment() {
 }
 
 function addRole() {
-
+  //TODO: use the department IDs from the dept table to populate the choices for the list of DEPT ID (can nest connection.queries)
+  inquirer.prompt([
+    {
+      type: 'input',
+      message: 'What is the title of your role?',
+      name: 'roleTitle'
+    },
+    {
+      type: 'number',
+      message: 'What is the salary of your role?',
+      name: 'salary'
+    },
+    {
+      type: 'number',
+      message: 'What is the department ID for your role?',
+      //TODO: choices go here
+      name: 'deptID'
+    }
+  ]).then(answers => {
+    console.log('Inserting a new role...\n');
+    connection.query(
+      "INSERT INTO role SET ?",
+      {
+        title: answers.roleTitle,
+        salary: answers.salary,
+        department_id: answers.deptId
+      },
+      (err, res) => {
+        if (err) throw err;
+        console.log(res.affectedRows + " role inserted!\n");
+        startUp();
+      }
+    )
+  })
 }
+
 function addEmployee() {
 
 }
