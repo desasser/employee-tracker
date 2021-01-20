@@ -61,9 +61,28 @@ function startUp() {
   })
 };
 
+// adds department to the dept table in the db
 function addDepartment() {
-  
+  inquirer.prompt({
+    type: 'input',
+    message: 'What is the name of your department?',
+    name: 'deptName'
+  }).then(answers => {
+    console.log('Inserting a new department...\n');
+    connection.query(
+      "INSERT INTO department SET ?",
+      {
+        name: answers.deptName
+      },
+      (err, res) => {
+        if (err) throw err;
+        console.log(res.affectedRows + " product inserted!\n");
+        startUp();
+      }
+    )
+  })
 }
+
 function addRole() {
 
 }
