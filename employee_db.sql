@@ -29,4 +29,6 @@ CREATE TABLE employee (
     REFERENCES role(id),
   CONSTRAINT FOREIGN KEY (manager_id)
     REFERENCES employee(id)
+    ON UPDATE CASCADE
+    ON DELETE CASCADE
 );
