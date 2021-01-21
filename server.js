@@ -1,6 +1,7 @@
 const mysql = require("mysql");
 require('dotenv').config();
 const inquirer = require("inquirer");
+require('console.table');
 
 const connection = mysql.createConnection({
   host: "localhost",
@@ -109,11 +110,12 @@ function addRole() {
       {
         title: answers.roleTitle,
         salary: answers.salary,
-        department_id: answers.deptId
+        department_id: answers.deptID
       },
       (err, res) => {
         if (err) throw err;
         console.log(res.affectedRows + " role inserted!\n");
+        console.table(res);
         startUp();
       }
     )
@@ -121,8 +123,47 @@ function addRole() {
 }
 
 function addEmployee() {
+  inquirer.prompt([
+    {
+      type: 'input',
+      message: "What is the employee's first name?",
+      name: 'firstName'
+    },
+    {
+      type: 'input',
+      message: "What is the employee's last name?",
+      name: 'lastName'
+    },
+    {
+      type: 'number',
+      message: "What is the employee's role ID?",
+      name: 'roleID'
+    },
+    {
+      type: 'number',
+      message: "What is the employee's manager's ID?",
+      name: 'mgmtID'
+    }
+  ]).then(answers => {
+      console.log('Inserting a new employee...\n');
+      connection.query(
+        "INSERT INTO employee SET ?",
+        {
+          first_name: answers.firstName,
+          last_name: answers.lastName,
+          role_id: answers.roleID,
+          manager_id: answers.mgmtID
+        },
+        (err, res) => {
+          if (err) throw err;
+          console.log(res.affectedRows + " role inserted!\n");
+          console.table(res);
+          startUp();
+        }
+      )
+    })
+  }
 
-}
 function viewDepartment() {
 
 }
