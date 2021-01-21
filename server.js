@@ -165,14 +165,35 @@ function addEmployee() {
   }
 
 function viewDepartment() {
-
+  connection.query(
+    "SELECT * FROM department", (err,res) => {
+      if (err) throw err;
+      console.table(res);
+      startUp();
+    }
+  )
 }
+
 function viewRole() {
-
+  connection.query(
+    "SELECT * FROM role", (err,res) => {
+      if (err) throw err;
+      console.table(res);
+      startUp();
+    }
+  )
 }
+
 function viewEmployee() {
-
+  connection.query(
+    "SELECT * FROM employee", (err,res) => {
+      if (err) throw err;
+      console.table(res);
+      startUp();
+    }
+  )
 }
+
 function updateRoles() {
 
 }
