@@ -89,14 +89,10 @@ function addDepartment() {
 
 function addRole() {
   const departmentArr = [];
-  connection.query("SELECT DISTINCT department_id FROM role", (err, res) => {
+  connection.query("SELECT name FROM department", (err, res) => {
     if (err) throw err;
     res.forEach(element => {
-      //TODO: How to handle null department value if you don't know their dept?
-      //These are also just numbers not names of departments
-      if (element.department_id != null) {
-        departmentArr.push(element.department_id)
-      }
+        departmentArr.push(element.name)
     });
     console.log(departmentArr);
     inquirer.prompt([
@@ -114,16 +110,23 @@ function addRole() {
         type: 'list',
         message: 'Department ID?',
         choices: departmentArr,
-        name: 'deptID'
+        name: 'deptName'
       }
     ]).then(answers => {
       console.log('Inserting a new role...\n');
+      //TODO: deptID is taking in a name from the prompt, but the deptID should be a number for the role table
+      let deptID;
+      res.forEach(element => {
+        if (element.name === answers.deptName) {
+          deptID = element.id;
+        }
+      })
       connection.query(
         "INSERT INTO role SET ?",
         {
           title: answers.roleTitle,
           salary: answers.salary,
-          department_id: answers.deptID
+          department_id: deptID
         },
         (err, res) => {
           if (err) throw err;
