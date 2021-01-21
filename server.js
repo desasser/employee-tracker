@@ -88,13 +88,9 @@ function addDepartment() {
 }
 
 function addRole() {
-  const departmentArr = [];
   connection.query("SELECT name FROM department", (err, res) => {
     if (err) throw err;
-    res.forEach(element => {
-      departmentArr.push(element.name)
-    });
-    console.log(departmentArr);
+    const departmentArr = res.map(element => ({name:element.name,value:element.id}));
     inquirer.prompt([
       {
         type: 'input',
@@ -110,25 +106,18 @@ function addRole() {
         type: 'list',
         message: 'Department ID?',
         choices: departmentArr,
-        name: 'deptName'
+        name: 'deptID'
       }
     ]).then(answers => {
       console.log('Inserting a new role...\n');
-      let deptID;
-      //TODO: is there a way to do this using mysql?
-      // swaps the name for the ID
-      res.forEach(element => {
-        if (element.name === answers.deptName) {
-          deptID = element.id;
-        }
-      })
+
       // places info into the db
       connection.query(
         "INSERT INTO role SET ?",
         {
           title: answers.roleTitle,
           salary: answers.salary,
-          department_id: deptID
+          department_id: answers.deptID
         },
         (err, res) => {
           if (err) throw err;
@@ -147,18 +136,16 @@ function addEmployee() {
   // fetch titles for role choices
   connection.query("SELECT title, id FROM role", (err, res) => {
     if (err) throw err;
-    res.forEach(element => {
-      roleArr.push(element.title)
-    });
-    const mgmtArr = [];
-    let fullName;
+    const roleArr = res.map(element => ({ name: element.title, value: element.id }));
 
+    let fullName;
     // fetch names for manager choices
     connection.query("SELECT first_name,last_name, id FROM employee", (err, res2) => {
       if (err) throw err;
-      res2.forEach(element => {
+      const mgmtArr = res2.map(element => {
         fullName = `${element.first_name} ${element.last_name}`;
-        mgmtArr.push(fullName);
+        return { name: fullName, value: element.id };
+        // mgmtArr.push({name: fullName,value: element.id});
       });
       inquirer.prompt([
         {
@@ -175,45 +162,24 @@ function addEmployee() {
           type: 'list',
           message: 'Role?',
           choices: roleArr,
-          name: 'roleTitle'
+          name: 'roleID'
         },
         {
           type: 'list',
           message: 'Manager?',
           choices: mgmtArr,
-          name: 'mgmtName'
+          name: 'mgmtID'
         }
       ]).then(answers => {
         console.log('Inserting a new employee...\n');
-        // declare variables for storing id numbers
-        let roleID;
-        let mgmtID;
-        
-        // swaps the title for the ID in role
-        res.forEach(element => {
-          if (element.title === answers.roleTitle) {
-            roleID = element.id;
-          }
-        })
 
-        // swaps the name for the ID in employee
-        res2.forEach(element => {
-          const compName = `${element.first_name} ${element.last_name}`;
-          console.log(compName);
-          console.log(answers.mgmtName);
-          if (compName === answers.mgmtName) {
-            mgmtID = element.id;
-          }
-        })
-        console.log('mgmtID', mgmtID);
-        // places the info into the db
         connection.query(
           "INSERT INTO employee SET ?",
           {
             first_name: answers.firstName,
             last_name: answers.lastName,
-            role_id: roleID,
-            manager_id: mgmtID
+            role_id: answers.roleID,
+            manager_id: answers.mgmtID
           },
           (err, res) => {
             if (err) throw err;
@@ -256,9 +222,10 @@ function viewEmployee() {
   )
 }
 
+//TODO: update the call here
 function viewEmployeeByMGMT() {
   const managerArr = [];
-  connection.query("SELECT DISTINCT manager_id FROM employee", (err, res) => {
+  connection.query("SELECT * FROM employee JOIN role USING (id)", (err, res) => {
     if (err) throw err;
     res.forEach(element => {
       managerArr.push(element.manager_id)
