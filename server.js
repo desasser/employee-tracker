@@ -27,7 +27,7 @@ function startUp() {
   inquirer.prompt(
     {
       type: 'list',
-      choices: ['Add department', 'Add role', 'Add employee', 'View department', 'View role', 'View employee', 'View employees by manager', 'Update employee roles'],
+      choices: ['Add department', 'Add role', 'Add employee', 'View department', 'View role', 'View employee', 'View employees by manager', 'Delete department', 'Quit'],
       message: 'What would you like to do?',
       name: 'action'
     }
@@ -55,8 +55,11 @@ function startUp() {
       case 'View employees by manager':
         viewEmployeeByMGMT();
         break;
-      case 'Update employee roles':
-        updateRoles();
+      case 'Delete department':
+        deleteDepartment();
+        break;
+      case 'Quit':
+        connection.end();
         break;
       default:
         connection.end();
@@ -87,10 +90,12 @@ function addDepartment() {
   })
 }
 
+// ???
 function addRole() {
-  connection.query("SELECT name FROM department", (err, res) => {
+  connection.query("SELECT name, id FROM department", (err, res) => {
     if (err) throw err;
     const departmentArr = res.map(element => ({name:element.name,value:element.id}));
+    console.log(res);
     inquirer.prompt([
       {
         type: 'input',
@@ -110,7 +115,8 @@ function addRole() {
       }
     ]).then(answers => {
       console.log('Inserting a new role...\n');
-
+      console.log('dept arr', departmentArr);
+      console.log('department_id', answers.deptID);
       // places info into the db
       connection.query(
         "INSERT INTO role SET ?",
@@ -131,8 +137,6 @@ function addRole() {
 }
 
 function addEmployee() {
-  const roleArr = [];
-
   // fetch titles for role choices
   connection.query("SELECT title, id FROM role", (err, res) => {
     if (err) throw err;
@@ -194,7 +198,7 @@ function addEmployee() {
 
 function viewDepartment() {
   connection.query(
-    "SELECT * FROM department", (err, res) => {
+    "SELECT name FROM department", (err, res) => {
       if (err) throw err;
       console.table(res);
       startUp();
@@ -204,7 +208,7 @@ function viewDepartment() {
 
 function viewRole() {
   connection.query(
-    "SELECT * FROM role", (err, res) => {
+    "SELECT title, salary, name FROM role JOIN department ON role.department_id = department.id", (err, res) => {
       if (err) throw err;
       console.table(res);
       startUp();
@@ -214,7 +218,7 @@ function viewRole() {
 
 function viewEmployee() {
   connection.query(
-    "SELECT * FROM employee", (err, res) => {
+    "SELECT first_name, last_name, title, salary, name FROM employee JOIN role ON employee.role_id = role.id JOIN department ON role.department_id = department.id", (err, res) => {
       if (err) throw err;
       console.table(res);
       startUp();
@@ -222,22 +226,21 @@ function viewEmployee() {
   )
 }
 
-//TODO: update the call here
 function viewEmployeeByMGMT() {
-  const managerArr = [];
-  connection.query("SELECT * FROM employee JOIN role USING (id)", (err, res) => {
+  connection.query("SELECT * FROM employee", (err, res) => {
     if (err) throw err;
-    res.forEach(element => {
-      managerArr.push(element.manager_id)
+    const managerArr = res.map(element => {
+      fullName = `${element.first_name} ${element.last_name}`;
+      return { name: fullName, value: element.id };
     });
     inquirer.prompt({
       type: 'list',
-      choices: managerArr, //TODO: Current choices are just manager ID number, should be names?
+      choices: managerArr,
       message: 'Which manager would you like to view?',
       name: 'employeesByMGMT'
     }).then(response => {
       connection.query(
-        "SELECT * FROM employee WHERE manager_id = ?", [response.employeesByMGMT], (err, res) => {
+        "SELECT first_name, last_name, title, salary FROM employee JOIN role ON employee.role_id = role.id WHERE manager_id = ?", [response.employeesByMGMT], (err, res) => {
           if (err) throw err;
           console.table(res);
           startUp();
@@ -246,12 +249,12 @@ function viewEmployeeByMGMT() {
   });
 }
 
-function updateRoles() {
-  // Should return a list of employees and their roles
-  // Should then ask which employee you'd like to update
-  // What would you like to change (firstName, lastName, roleID, mgmtID)
-  // Switch for each option and allow for updates to the db
+function deleteDepartment() {
 }
 
+// Should return a list of employees and their roles
+// Should then ask which employee you'd like to update
+// What would you like to change (firstName, lastName, roleID, mgmtID)
+// Switch for each option and allow for updates to the db
 // Add other functions like updateRoles for updating departments, roles, and employees
 // Also should be able to delete them
