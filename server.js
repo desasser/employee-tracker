@@ -102,17 +102,17 @@ function addRole() {
     inquirer.prompt([
       {
         type: 'input',
-        message: 'What is the title of your role?',
+        message: 'Title?',
         name: 'roleTitle'
       },
       {
         type: 'number',
-        message: 'What is the salary of your role?',
+        message: 'Salary?',
         name: 'salary'
       },
       {
         type: 'list',
-        message: 'What is the department ID for your role?',
+        message: 'Department ID?',
         choices: departmentArr,
         name: 'deptID'
       }
