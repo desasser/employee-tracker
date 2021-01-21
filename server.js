@@ -27,7 +27,7 @@ function startUp() {
   inquirer.prompt(
     {
       type: 'list',
-      choices: ['Add department', 'Add role', 'Add employee', 'View department', 'View role', 'View employee', 'Update employee roles'],
+      choices: ['Add department', 'Add role', 'Add employee', 'View department', 'View role', 'View employee', 'View employees by manager', 'Update employee roles'],
       message: 'What would you like to do?',
       name: 'action'
     }
@@ -51,6 +51,9 @@ function startUp() {
         break;
       case 'View employee':
         viewEmployee();
+        break;
+      case 'View employees by manager':
+        viewEmployeeByMGMT();
         break;
       case 'Update employee roles':
         updateRoles();
@@ -85,41 +88,52 @@ function addDepartment() {
 }
 
 function addRole() {
-  //TODO: use the department IDs from the dept table to populate the choices for the list of DEPT ID (can nest connection.queries)
-  inquirer.prompt([
-    {
-      type: 'input',
-      message: 'What is the title of your role?',
-      name: 'roleTitle'
-    },
-    {
-      type: 'number',
-      message: 'What is the salary of your role?',
-      name: 'salary'
-    },
-    {
-      type: 'number',
-      message: 'What is the department ID for your role?',
-      //TODO: choices go here
-      name: 'deptID'
-    }
-  ]).then(answers => {
-    console.log('Inserting a new role...\n');
-    connection.query(
-      "INSERT INTO role SET ?",
-      {
-        title: answers.roleTitle,
-        salary: answers.salary,
-        department_id: answers.deptID
-      },
-      (err, res) => {
-        if (err) throw err;
-        console.log(res.affectedRows + " role inserted!\n");
-        console.table(res);
-        startUp();
+  const departmentArr = [];
+  connection.query("SELECT DISTINCT department_id FROM role", (err, res) => {
+    if (err) throw err;
+    res.forEach(element => {
+      //TODO: How to handle null department value if you don't know their dept?
+      //These are also just numbers not names of departments
+      if (element.department_id != null) {
+        departmentArr.push(element.department_id)
       }
-    )
-  })
+    });
+    console.log(departmentArr);
+    inquirer.prompt([
+      {
+        type: 'input',
+        message: 'What is the title of your role?',
+        name: 'roleTitle'
+      },
+      {
+        type: 'number',
+        message: 'What is the salary of your role?',
+        name: 'salary'
+      },
+      {
+        type: 'list',
+        message: 'What is the department ID for your role?',
+        choices: departmentArr,
+        name: 'deptID'
+      }
+    ]).then(answers => {
+      console.log('Inserting a new role...\n');
+      connection.query(
+        "INSERT INTO role SET ?",
+        {
+          title: answers.roleTitle,
+          salary: answers.salary,
+          department_id: answers.deptID
+        },
+        (err, res) => {
+          if (err) throw err;
+          console.log(res.affectedRows + " role inserted!\n");
+          console.table(res);
+          startUp();
+        }
+      )
+    });
+  });
 }
 
 function addEmployee() {
@@ -145,28 +159,28 @@ function addEmployee() {
       name: 'mgmtID'
     }
   ]).then(answers => {
-      console.log('Inserting a new employee...\n');
-      connection.query(
-        "INSERT INTO employee SET ?",
-        {
-          first_name: answers.firstName,
-          last_name: answers.lastName,
-          role_id: answers.roleID,
-          manager_id: answers.mgmtID
-        },
-        (err, res) => {
-          if (err) throw err;
-          console.log(res.affectedRows + " role inserted!\n");
-          console.table(res);
-          startUp();
-        }
-      )
-    })
-  }
+    console.log('Inserting a new employee...\n');
+    connection.query(
+      "INSERT INTO employee SET ?",
+      {
+        first_name: answers.firstName,
+        last_name: answers.lastName,
+        role_id: answers.roleID,
+        manager_id: answers.mgmtID
+      },
+      (err, res) => {
+        if (err) throw err;
+        console.log(res.affectedRows + " role inserted!\n");
+        console.table(res);
+        startUp();
+      }
+    )
+  })
+}
 
 function viewDepartment() {
   connection.query(
-    "SELECT * FROM department", (err,res) => {
+    "SELECT * FROM department", (err, res) => {
       if (err) throw err;
       console.table(res);
       startUp();
@@ -176,7 +190,7 @@ function viewDepartment() {
 
 function viewRole() {
   connection.query(
-    "SELECT * FROM role", (err,res) => {
+    "SELECT * FROM role", (err, res) => {
       if (err) throw err;
       console.table(res);
       startUp();
@@ -186,7 +200,7 @@ function viewRole() {
 
 function viewEmployee() {
   connection.query(
-    "SELECT * FROM employee", (err,res) => {
+    "SELECT * FROM employee", (err, res) => {
       if (err) throw err;
       console.table(res);
       startUp();
@@ -194,6 +208,35 @@ function viewEmployee() {
   )
 }
 
-function updateRoles() {
-
+function viewEmployeeByMGMT() {
+  const managerArr = [];
+  connection.query("SELECT DISTINCT manager_id FROM employee", (err, res) => {
+    if (err) throw err;
+    res.forEach(element => {
+      managerArr.push(element.manager_id)
+    });
+    inquirer.prompt({
+      type: 'list',
+      choices: managerArr, //TODO: Current choices are just manager ID number, should be names?
+      message: 'Which manager would you like to view?',
+      name: 'employeesByMGMT'
+    }).then(response => {
+      connection.query(
+        "SELECT * FROM employee WHERE manager_id = ?", [response.employeesByMGMT], (err, res) => {
+          if (err) throw err;
+          console.table(res);
+          startUp();
+        });
+    });
+  });
 }
+
+function updateRoles() {
+  // Should return a list of employees and their roles
+  // Should then ask which employee you'd like to update
+  // What would you like to change (firstName, lastName, roleID, mgmtID)
+  // Switch for each option and allow for updates to the db
+}
+
+// Add other functions like updateRoles for updating departments, roles, and employees
+// Also should be able to delete them
