@@ -27,7 +27,7 @@ function startUp() {
   inquirer.prompt(
     {
       type: 'list',
-      choices: ['Add department', 'Add role', 'Add employee', 'View department', 'View role', 'View employee', 'View employees by manager', 'Delete department', 'Quit'],
+      choices: ['Add department', 'Add role', 'Add employee', 'View department', 'View role', 'View employee', 'View employees by manager', 'Update employee roles', 'Delete department', 'Quit'],
       message: 'What would you like to do?',
       name: 'action'
     }
@@ -54,6 +54,9 @@ function startUp() {
         break;
       case 'View employees by manager':
         viewEmployeeByMGMT();
+        break;
+      case 'Update employee roles':
+        updateRole();
         break;
       case 'Delete department':
         deleteDepartment();
@@ -90,11 +93,10 @@ function addDepartment() {
   })
 }
 
-// ???
 function addRole() {
   connection.query("SELECT name, id FROM department", (err, res) => {
     if (err) throw err;
-    const departmentArr = res.map(element => ({name:element.name,value:element.id}));
+    const departmentArr = res.map(element => ({ name: element.name, value: element.id }));
     console.log(res);
     inquirer.prompt([
       {
@@ -249,7 +251,62 @@ function viewEmployeeByMGMT() {
   });
 }
 
+function updateRole() {
+  connection.query("SELECT * FROM employee", (err, res) => {
+    if (err) throw err;
+    const empArr = res.map(element => {
+      fullName = `${element.first_name} ${element.last_name}`;
+      return { name: fullName, value: element.id };
+    });
+    connection.query("SELECT title,id FROM role", (err, res2) => {
+      if (err) throw err;
+      const roleArr = res2.map(element => ({ name: element.title, value: element.id }))
+
+      inquirer.prompt([
+        {
+          type: 'list',
+          message: 'Which employee do you want to modify?',
+          choices: empArr,
+          name: 'modEmp'
+        }, {
+          type: 'list',
+          message: 'What is their new role?',
+          choices: roleArr,
+          name: 'modRole'
+        }
+      ]).then(response => {
+        connection.query("UPDATE employee SET ? WHERE ?", [
+          { role_id: response.modRole },
+          { id: response.modEmp }], (err, res3) => {
+            if (err) throw err;
+            console.log(res3.affectedRows + " role updated!\n");
+            viewEmployee();
+          })
+      })
+    })
+  })
+}
+
 function deleteDepartment() {
+  connection.query(
+    "SELECT name,id FROM department", (err, res) => {
+      const deptArr = res.map(element => ({name:element.name, value:element.id}));
+      if (err) throw err;
+      inquirer.prompt({
+        type: 'list',
+        message: 'Delete which department?',
+        choices: deptArr,
+        name: 'delDept'
+      }).then(response => {
+        connection.query(
+          "DELETE FROM department WHERE ?", {id: response.delDept}, (err,res) => {
+            if (err) throw err;
+            console.log(res.affectedRows + " department deleted!\n");
+            viewDepartment();
+          }
+        )
+      })
+})
 }
 
 // Should return a list of employees and their roles
