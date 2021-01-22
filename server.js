@@ -130,7 +130,6 @@ function addRole() {
         (err, res) => {
           if (err) throw err;
           console.log(res.affectedRows + " role inserted!\n");
-          console.table(res);
           startUp();
         }
       )
