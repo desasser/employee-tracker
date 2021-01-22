@@ -309,9 +309,6 @@ function deleteDepartment() {
 })
 }
 
-// Should return a list of employees and their roles
-// Should then ask which employee you'd like to update
-// What would you like to change (firstName, lastName, roleID, mgmtID)
-// Switch for each option and allow for updates to the db
-// Add other functions like updateRoles for updating departments, roles, and employees
-// Also should be able to delete them
+// TODO: Future progress - Delete roles, delete employees, update role departments
+// TODO: Future progress - When a dept or role is deleted, require the user to update the roles for each employee affected and when a dept is deleted, require the user to update the department for each role affected
+// TODO: Future progress - Calculate the total utilized budget for a department (combined salary)
