@@ -69,7 +69,7 @@ function startUp() {
         break;
     }
   })
-};
+}
 
 // adds department to the dept table in the db
 function addDepartment() {
@@ -151,7 +151,6 @@ function addEmployee() {
       const mgmtArr = res2.map(element => {
         fullName = `${element.first_name} ${element.last_name}`;
         return { name: fullName, value: element.id };
-        // mgmtArr.push({name: fullName,value: element.id});
       });
       inquirer.prompt([
         {
@@ -190,7 +189,6 @@ function addEmployee() {
           (err, res) => {
             if (err) throw err;
             console.log(res.affectedRows + " role inserted!\n");
-            console.table(res);
             startUp();
           })
       })
